@@ -107,6 +107,7 @@ export class GbizClient {
     if (res.status === 429) {
       throw new Error("レート制限(429)。--delay を増やして再実行してください。");
     }
+    if (res.status === 404) return { hits: [], raw: null };
     if (!res.ok) {
       throw new Error(`gBizINFO HTTP ${res.status}: ${url}`);
     }
@@ -128,6 +129,54 @@ export class GbizClient {
       if (hits.length === 0) break;
       out.push(...hits);
       await this.sleep(delay);
+    }
+    return out;
+  }
+
+  /**
+   * 個社の詳細取得（/hojin/{法人番号}）。
+   * 検索一覧は軽量応答で従業員数・資本金・財務を返さないため、これで補完する。
+   * 見つからない/データ無しは null。
+   */
+  async getDetail(corporateNumber: string): Promise<GbizHojin | null> {
+    if (!corporateNumber) return null;
+    const url = `${GBIZ_BASE}/${encodeURIComponent(corporateNumber)}`;
+    const res = await this.f(url, {
+      headers: { "X-hojinInfo-api-token": this.token, Accept: "application/json" },
+    });
+    if (res.status === 404) return null;
+    if (res.status === 403 || res.status === 401) {
+      throw new Error(`認証エラー(${res.status})。トークンを確認してください。`);
+    }
+    if (res.status === 429) {
+      throw new Error("レート制限(429)。--delay を増やして再実行してください。");
+    }
+    if (!res.ok) throw new Error(`gBizINFO detail HTTP ${res.status}: ${url}`);
+    const json = (await res.json()) as { "hojin-infos"?: GbizHojin[] };
+    return json["hojin-infos"]?.[0] ?? null;
+  }
+
+  /** 検索一覧(lean)に詳細(full)をマージ。詳細にある値で上書き（identityは元を維持）。 */
+  async enrich(
+    hits: GbizHojin[],
+    opts: { onProgress?: (done: number, total: number) => void } = {},
+  ): Promise<GbizHojin[]> {
+    const delay = this.opts.delayMs ?? 300;
+    const out: GbizHojin[] = [];
+    for (let i = 0; i < hits.length; i++) {
+      const h = hits[i];
+      let merged = h;
+      if (h.corporate_number) {
+        try {
+          const d = await this.getDetail(h.corporate_number);
+          if (d) merged = { ...h, ...d };
+        } catch {
+          // 個社失敗は致命ではない。lean のまま残す。
+        }
+        await this.sleep(delay);
+      }
+      out.push(merged);
+      opts.onProgress?.(i + 1, hits.length);
     }
     return out;
   }
