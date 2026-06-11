@@ -131,7 +131,7 @@ function main() {
   if (tierFilter) rows = rows.filter((r) => tierFilter.includes(String(r["優先度"]).toUpperCase()));
   if (limit !== undefined) rows = rows.slice(0, limit);
 
-  const header = ["優先度", "法人名", "業種", "宛先", "件名", "本文"];
+  const header = ["優先度", "法人名", "業種", "メール", "電話番号", "問い合わせURL", "宛先", "件名", "本文"];
   const lines = [header.join(",")];
   for (const r of rows) {
     lines.push(
@@ -139,6 +139,9 @@ function main() {
         String(r["優先度"] ?? ""),
         String(r["法人名"] ?? ""),
         String(r["業種"] ?? ""),
+        String(r["メールアドレス"] ?? ""),
+        String(r["電話番号"] ?? ""),
+        String(r["問い合わせURL"] ?? ""),
         r["代表者"] ? `${String(r["代表者"])} 様` : "ご担当者様",
         subject(String(r["業種"] ?? ""), String(r["法人名"] ?? "")),
         body(r),

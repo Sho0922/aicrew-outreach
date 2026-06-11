@@ -7,7 +7,8 @@
   "scripts": {
     "crawl-prospects": "tsx scripts/crawl-prospects.ts",
     "crawl-prospects:dry": "tsx scripts/crawl-prospects.ts --dry-run",
-    "gen-emails": "tsx scripts/gen-emails.ts"
+    "gen-emails": "tsx scripts/gen-emails.ts",
+    "extract-emails": "tsx scripts/extract-emails.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
