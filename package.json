@@ -1,0 +1,12 @@
+{
+  "name": "aicrew-outreach",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "crawl-prospects": "tsx scripts/crawl-prospects.ts",
+    "crawl-prospects:dry": "tsx scripts/crawl-prospects.ts --dry-run"
+  },
+  "dependencies": { "dotenv": "^17.4.2", "xlsx": "^0.18.5" },
+  "devDependencies": { "@types/node": "^20", "tsx": "^4.22.3", "typescript": "^5" }
+}
